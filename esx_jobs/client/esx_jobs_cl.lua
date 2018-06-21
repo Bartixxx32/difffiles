@@ -11,8 +11,10 @@ local Keys = {
 }
 
 local PlayerData              = {}
-local menuIsShowed            = false
-local hintIsShowed            = false
+local menuIsShowed        = false
+local hintIsShowed        = false
+
+
 local hasAlreadyEnteredMarker = false
 local Blips                   = {}
 local JobBlips                = {}
@@ -28,29 +30,29 @@ local isInPublicMarker        = false
 local newTask                 = false
 local hintToDisplay           = "no hint to display"
 local jobDone                 = false
-local onDuty                  = false
-local moneyInBank             = 0
-local spawner                 = 0
+local onDuty          = false
+local moneyInBank       = 0
+
+local spawner           = 0
 local myPlate                 = {}
+
 local isJobVehicleDestroyed   = false
 
-local cautionVehicleInCaseofDrop    = 0
+local cautionVehicleInCaseofDrop  = 0
 local maxCautionVehicleInCaseofDrop = 0
-local vehicleObjInCaseofDrop        = nil
-local vehicleInCaseofDrop           = nil
-local vehicleHashInCaseofDrop       = nil
+local vehicleObjInCaseofDrop    = nil
+local vehicleInCaseofDrop       = nil
+local vehicleHashInCaseofDrop     = nil
 local vehicleMaxHealthInCaseofDrop  = nil
 local vehicleOldHealthInCaseofDrop  = nil
 
 ESX = nil
 
 Citizen.CreateThread(function()
-	while ESX == nil do
-		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-		Citizen.Wait(0)
-	end
-	
-	PlayerData = ESX.GetPlayerData()
+  while ESX == nil do
+    TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+    Citizen.Wait(0)
+  end
 end)
 
 RegisterNetEvent('esx:playerLoaded')
@@ -169,6 +171,7 @@ AddEventHandler('esx_jobs:action', function(job, zone)
                     SetEntityCoords(GetPlayerPed(-1), w.Teleport.x, w.Teleport.y, w.Teleport.z)
                   end
 
+                  TriggerEvent('esx_vehiclelock:updatePlayerCars', "remove", myPlate[i])
                   table.remove(myPlate, i)
 
                   if vehicleObjInCaseofDrop.HasCaution then
@@ -222,6 +225,7 @@ function nextStep(gps)
   end
 end
 
+-- #########################
 AddEventHandler('esx_jobs:hasExitedMarker', function(zone)
   TriggerServerEvent('esx_jobs:stopWork')
   hintToDisplay = "no hint to display"
@@ -317,10 +321,17 @@ AddEventHandler('esx_jobs:spawnJobVehicle', function(spawnPoint, vehicle)
     SetNetworkIdCanMigrate(id, true)
 
     local platePrefix = "WORK"
+    for k,v in pairs(Config.Plates) do
+      if PlayerData.job.name == k then
+        platePrefix = v
+      end
+    end
+
     plate = platePrefix .. plate
     SetVehicleNumberPlateText(veh, plate)
     table.insert(myPlate, plate)
     plate = string.gsub(plate, " ", "")
+    TriggerEvent('esx_vehiclelock:updatePlayerCars', "add", plate)
     SetVehRadioStation(veh, "OFF")
     TaskWarpPedIntoVehicle(playerPed, veh, -1)
     isJobVehicleDestroyed = false
@@ -338,7 +349,7 @@ end)
 -- Show top left hint
 Citizen.CreateThread(function()
   while true do
-    Citizen.Wait(10)
+    Wait(0)
     if hintIsShowed == true then
       SetTextComponentFormat("STRING")
       AddTextComponentString(hintToDisplay)
@@ -350,7 +361,7 @@ end)
 -- Display markers (only if on duty and the player's job ones)
 Citizen.CreateThread(function()
   while true do
-    Citizen.Wait(0)
+    Wait(0)
     local zones = {}
     if PlayerData.job ~= nil then
       for k,v in pairs(Config.Jobs) do
@@ -374,7 +385,7 @@ end)
 -- Display public markers
 Citizen.CreateThread(function()
   while true do
-    Citizen.Wait(0)
+    Wait(0)
     local coords = GetEntityCoords(GetPlayerPed(-1))
     for k,v in pairs(Config.PublicZones) do
       if(v.Marker ~= -1 and GetDistanceBetweenCoords(coords, v.Pos.x, v.Pos.y, v.Pos.z, true) < Config.DrawDistance) then
@@ -387,7 +398,7 @@ end)
 -- Activate public marker
 Citizen.CreateThread(function()
   while true do
-    Citizen.Wait(0)
+    Wait(0)
     local coords      = GetEntityCoords(GetPlayerPed(-1))
     local position    = nil
     local zone        = nil
@@ -423,7 +434,7 @@ end)
 -- Activate menu when player is inside marker
 Citizen.CreateThread(function()
   while true do
-    Citizen.Wait(0)
+    Wait(0)
 
     if PlayerData.job ~= nil and PlayerData.job.name ~= 'unemployed' then
       local zones = nil
@@ -515,7 +526,7 @@ end)
 -- VEHICLE CAUTION
 Citizen.CreateThread(function()
   while true do
-    Citizen.Wait(0)
+    Wait(0)
     if vehicleInCaseofDrop ~= nil then
       if onDuty and IsVehicleModel(vehicleInCaseofDrop, vehicleHashInCaseofDrop) then
         local vehicleHealth = GetEntityHealth(vehicleInCaseofDrop)

@@ -1,11 +1,25 @@
-Config                = {}
-Config.DrawDistance   = 100
-Config.Size           = { x = 1.5, y = 1.5, z = 1.5 }
-Config.Color          = { r = 0, g = 128, b = 255 }
-Config.Type           = 1
-Config.Locale         = 'en'
-Config.EnableLicense  = true -- only turn this on if you are using esx_license
-Config.LicensePrice   = 5000
+Config                			= {}
+Config.DrawDistance   			= 100
+Config.Size           			= { x = 1.5, y = 1.5, z = 1.5 }
+Config.Color          			= { r = 0, g = 128, b = 255 }
+Config.Type           			= 1
+Config.Locale         			= 'en'
+Config.EnableLicense  			= true
+Config.LicensePrice   			= 5000
+Config.EnableClipGunShop		= true
+Config.EnableClipBlackWeashop	= true
+
+Config.EnableClip = {
+	GunShop = {
+		Price = 5000,
+		Label = "Chargeur"	
+	},
+	BlackWeashop = {
+		name = "BlackWeashop",
+		Price = 8750,
+		Label = "Chargeur"	
+	}
+}
 
 Config.Zones = {
 

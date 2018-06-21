@@ -110,11 +110,11 @@ function OpenShopMenu ()
       ESX.UI.Menu.Open(
         'default', GetCurrentResourceName(), 'shop_confirm',
         {
-          title = _U('buy_vehicle_shop', vehicleData.name, vehicleData.price),
+          title = _U('buy') .. ' ' .. vehicleData.name .. ' ' .. _U('for') .. ' ' .. vehicleData.price .. ' ?',
           align = 'top-left',
           elements = {
             {label = _U('yes'), value = 'yes'},
-            {label = _U('no'),  value = 'no'},
+            {label = _U('no'), value = 'no'},
           },
         },
         function (data2, menu2)
@@ -134,7 +134,7 @@ function OpenShopMenu ()
 
                   FreezeEntityPosition(playerPed, false)
                   SetEntityVisible(playerPed, true)
-                  SetEntityCoords(playerPed, Config.Zones.ShopEntering.Pos.x, Config.Zones.ShopEntering.Pos.y, Config.Zones.ShopEntering.Pos.z)
+                  SetEntityCoords(playerPed, Config.Zones.BossActions.Pos.x, Config.Zones.BossActions.Pos.y, Config.Zones.BossActions.Pos.z)
 
                   menu2.close()
                   menu.close()
@@ -152,11 +152,11 @@ function OpenShopMenu ()
                 ESX.UI.Menu.Open(
                   'default', GetCurrentResourceName(), 'shop_confirm_buy_type',
                   {
-                    title = _U('purchase_type'),
+                    title = 'Type d\'achat',
                     align = 'top-left',
                     elements = {
-                      {label = _U('staff_type'),   value = 'personnal'},
-                      {label = _U('society_type'), value = 'society'},
+                      {label = 'Personnel', value = 'personnal'},
+                      {label = 'Societé',   value = 'society'},
                     },
                   },
                   function (data3, menu3)
@@ -286,6 +286,7 @@ function OpenShopMenu ()
       )
 
     end,
+
     function (data, menu)
 
       menu.close()
@@ -300,7 +301,12 @@ function OpenShopMenu ()
 
       FreezeEntityPosition(playerPed, false)
       SetEntityVisible(playerPed, true)
-      SetEntityCoords(playerPed, Config.Zones.ShopEntering.Pos.x, Config.Zones.ShopEntering.Pos.y, Config.Zones.ShopEntering.Pos.z)
+
+      if Config.EnablePlayerManagement then
+        SetEntityCoords(playerPed, Config.Zones.BossActions.Pos.x, Config.Zones.BossActions.Pos.y, Config.Zones.BossActions.Pos.z)
+      else
+        SetEntityCoords(playerPed, Config.Zones.ShopEntering.Pos.x, Config.Zones.ShopEntering.Pos.y, Config.Zones.ShopEntering.Pos.z)
+      end
 
       IsInShopMenu = false
 
@@ -347,7 +353,6 @@ function OpenResellerMenu ()
       title    = _U('car_dealer'),
       align    = 'top-left',
       elements = {
-        {label = _U('buy_vehicle'),                    value = 'buy_vehicle'},
         {label = _U('pop_vehicle'),                    value = 'pop_vehicle'},
         {label = _U('depop_vehicle'),                  value = 'depop_vehicle'},
         {label = _U('create_bill'),                    value = 'create_bill'},
@@ -360,9 +365,6 @@ function OpenResellerMenu ()
       }
     },
     function (data, menu)
-      if data.current.value == 'buy_vehicle' then
-        OpenShopMenu()
-      end
       if data.current.value == 'put_stock' then
         OpenPutStocksMenu()
       end
@@ -420,7 +422,6 @@ function OpenResellerMenu ()
         if closestPlayer == -1 or closestDistance > 3.0 then
           ESX.ShowNotification(_U('no_players'))
         else
-          SetVehicleNumberPlateText(LastVehicles[#LastVehicles], string.upper(ESX.GetRandomString(8)))
           local vehicleProps = ESX.Game.GetVehicleProperties(LastVehicles[#LastVehicles])
           local model        = CurrentVehicleData.model
 
@@ -442,7 +443,6 @@ function OpenResellerMenu ()
           ESX.ShowNotification(_U('no_players'))
         else
           ESX.TriggerServerCallback('esx:getOtherPlayerData', function (xPlayer)
-            SetVehicleNumberPlateText(LastVehicles[#LastVehicles], string.upper(ESX.GetRandomString(8)))
             local vehicleProps = ESX.Game.GetVehicleProperties(LastVehicles[#LastVehicles])
             local model        = CurrentVehicleData.model
 
@@ -477,7 +477,8 @@ function OpenResellerMenu ()
               if closestPlayer == -1 or closestDistance > 5.0 then
                 ESX.ShowNotification(_U('no_players'))
               else
-                SetVehicleNumberPlateText(LastVehicles[#LastVehicles], 'RENT' .. string.upper(ESX.GetRandomString(4)))
+                SetVehicleNumberPlateText(LastVehicles[#LastVehicles], 'LOC ' .. ESX.GetRandomString(5))
+
                 local vehicleProps = ESX.Game.GetVehicleProperties(LastVehicles[#LastVehicles])
                 local model        = CurrentVehicleData.model
 
@@ -634,10 +635,15 @@ function OpenBossActionsMenu ()
       title    = _U('dealer_boss'),
       align    = 'top-left',
       elements = {
-        {label = _U('boss_actions'),   value = 'boss_actions'},
+        {label = _U('buy_vehicle'), value = 'buy_vehicle'},
+        {label = 'Action Patron',   value = 'boss_actions'},
       },
     },
     function (data, menu)
+      if data.current.value == 'buy_vehicle' then
+        OpenShopMenu()
+      end
+
       if data.current.value == 'boss_actions' then
         TriggerEvent('esx_society:openBossMenu', 'cardealer', function(data, menu)
           menu.close()
@@ -844,7 +850,7 @@ AddEventHandler('esx_vehicleshop:hasEnteredMarker', function (zone)
       local resellPrice = math.floor(vehicleData.price / 100 * Config.ResellPercentage)
 
       CurrentAction     = 'resell_vehicle'
-      CurrentActionMsg  = _U('sell_menu', vehicleData.name, resellPrice)
+      CurrentActionMsg  = _U('sell_menu').. vehicleData.name .. _U('price') .. resellPrice
 
       CurrentActionData = {
         vehicle = vehicle,
@@ -898,7 +904,7 @@ end)
 -- Display markers
 Citizen.CreateThread(function ()
   while true do
-    Citizen.Wait(10)
+    Wait(0)
 
     local coords = GetEntityCoords(GetPlayerPed(-1))
 
@@ -913,7 +919,7 @@ end)
 -- Enter / Exit marker events
 Citizen.CreateThread(function ()
   while true do
-    Citizen.Wait(10)
+    Wait(0)
 
     local coords      = GetEntityCoords(GetPlayerPed(-1))
     local isInMarker  = false
@@ -942,7 +948,7 @@ end)
 -- Key controls
 Citizen.CreateThread(function ()
   while true do
-    Citizen.Wait(10)
+    Citizen.Wait(0)
 
     if CurrentAction ~= nil then
       SetTextComponentFormat('STRING')

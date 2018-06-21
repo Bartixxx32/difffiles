@@ -7,7 +7,7 @@ if Config.MaxInService ~= -1 then
 end
 
 TriggerEvent('esx_phone:registerNumber', 'taxi', _U('taxi_client'), true, true)
-TriggerEvent('esx_society:registerSociety', 'taxi', 'Taxi', 'society_taxi', 'society_taxi', 'society_taxi', {type = 'public'})
+TriggerEvent('esx_society:registerSociety', 'taxi', 'Taxi', 'society_taxi', 'society_taxi', 'society_taxi', {type = 'private'})
 
 RegisterServerEvent('esx_taxijob:success')
 AddEventHandler('esx_taxijob:success', function()
@@ -18,7 +18,7 @@ AddEventHandler('esx_taxijob:success', function()
   local total          = math.random(Config.NPCJobEarnings.min, Config.NPCJobEarnings.max);
   local societyAccount = nil
 
-  if xPlayer.job.grade >= 3 then
+  if xPlayer.job.grade >= 0 then
     total = total * 2
   end
 
@@ -48,27 +48,24 @@ end)
 
 RegisterServerEvent('esx_taxijob:getStockItem')
 AddEventHandler('esx_taxijob:getStockItem', function(itemName, count)
-	local xPlayer = ESX.GetPlayerFromId(source)
-	
-	TriggerEvent('esx_addoninventory:getSharedInventory', 'society_taxi', function(inventory)
-		local item = inventory.getItem(itemName)
-		local sourceItem = xPlayer.getInventoryItem(itemName)
 
-		-- is there enough in the society?
-		if count > 0 and item.count >= count then
-		
-			-- can the player carry the said amount of x item?
-			if sourceItem.limit ~= -1 and (sourceItem.count + count) > sourceItem.limit then
-				TriggerClientEvent('esx:showNotification', xPlayer.source, _U('player_cannot_hold'))
-			else
-				inventory.removeItem(itemName, count)
-				xPlayer.addInventoryItem(itemName, count)
-				TriggerClientEvent('esx:showNotification', xPlayer.source, _U('have_withdrawn') .. count .. ' ' .. item.label)
-			end
-		else
-			TriggerClientEvent('esx:showNotification', xPlayer.source, _U('quantity_invalid'))
-		end
-	end)
+  local xPlayer = ESX.GetPlayerFromId(source)
+
+  TriggerEvent('esx_addoninventory:getSharedInventory', 'society_taxi', function(inventory)
+
+    local item = inventory.getItem(itemName)
+
+    if item.count >= count then
+      inventory.removeItem(itemName, count)
+      xPlayer.addInventoryItem(itemName, count)
+    else
+      TriggerClientEvent('esx:showNotification', xPlayer.source, _U('quantity_invalid'))
+    end
+
+    TriggerClientEvent('esx:showNotification', xPlayer.source, _U('have_withdrawn') .. count .. ' ' .. item.label)
+
+  end)
+
 end)
 
 ESX.RegisterServerCallback('esx_taxijob:getStockItems', function(source, cb)

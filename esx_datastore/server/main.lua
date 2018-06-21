@@ -108,8 +108,7 @@ end)
 
 AddEventHandler('esx:playerLoaded', function(source)
 
-  local _source = source
-  local xPlayer = ESX.GetPlayerFromId(_source)
+  local xPlayer    = ESX.GetPlayerFromId(source)
   local dataStores = {}
 
   for i=1, #DataStoresIndex, 1 do
@@ -139,4 +138,3 @@ AddEventHandler('esx:playerLoaded', function(source)
   xPlayer.set('dataStores', dataStores)
 
 end)
-

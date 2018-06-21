@@ -1,54 +1,31 @@
-# esx_billing
+# fxserver-esx_billing
+FXServer ESX Billing
 
-## Download & Installation
+[INSTALLATION]
 
-### Using [fvm](https://github.com/qlaffont/fvm-installer)
+1) CD in your resources/[esx] folder
+2) Clone the repository
 ```
-fvm install --save --folder=esx esx-org/esx_billing
+git clone https://github.com/FXServer-ESX/fxserver-esx_billing esx_billing
 ```
-
-### Using Git
-```
-cd resources
-git clone https://github.com/ESX-Org/esx_billing [esx]/esx_billing
-```
-
-### Manually
-- Download https://github.com/ESX-Org/esx_billing/archive/master.zip
-- Put it in the `[esx]` directory
-
-
-## Installation
-- Import `esx_billing.sql` in your database
-- Add this in your server.cfg :
+3) Import esx_billing.sql in your database
+4) Add this in your server.cfg :
 
 ```
 start esx_billing
 ```
 
-## Usage
+[USAGE]
 
-Press `[F7]` To show the billing menu
+Press [F7] To show billing menu
 
-```lua
+```
 local amount                         = 100
 local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
 
 if closestPlayer == -1 or closestDistance > 3.0 then
-	ESX.ShowNotification('There\'s no players nearby!')
+  ESX.ShowNotification('Aucun joueur à proximité')
 else
-	TriggerServerEvent('esx_billing:sendBill', GetPlayerServerId(closestPlayer), 'society_taxi', 'Taxi', amount)
+  TriggerServerEvent('esx_billing:sendBill', GetPlayerServerId(closestPlayer), 'society_taxi', 'Taxi', amount)
 end
 ```
-
-# Legal
-### License
-esx_billing - billing for ESX
-
-Copyright (C) 2015-2018 Jérémie N'gadi
-
-This program Is free software: you can redistribute it And/Or modify it under the terms Of the GNU General Public License As published by the Free Software Foundation, either version 3 Of the License, Or (at your option) any later version.
-
-This program Is distributed In the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty Of MERCHANTABILITY Or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License For more details.
-
-You should have received a copy Of the GNU General Public License along with this program. If Not, see http://www.gnu.org/licenses/.

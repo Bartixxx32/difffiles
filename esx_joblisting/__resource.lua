@@ -1,8 +1,4 @@
-resource_manifest_version '44febabe-d386-4d18-afbe-5e627f4af937'
-
-description 'ESX Job Listing'
-
-version '1.1.0'
+version '1.0.0'
 
 server_scripts {
 	'@mysql-async/lib/MySQL.lua',
@@ -11,11 +7,9 @@ server_scripts {
 	'locales/de.lua',
 	'locales/br.lua',
 	'locales/en.lua',
-	'locales/fi.lua',
 	'locales/fr.lua',
 	'locales/es.lua',
-	'locales/sv.lua',
-	'server/main.lua'
+	'server/esx_joblisting_sv.lua'
 }
 
 client_scripts {
@@ -24,9 +18,7 @@ client_scripts {
 	'locales/de.lua',
 	'locales/br.lua',
 	'locales/en.lua',
-	'locales/fi.lua',
 	'locales/fr.lua',
 	'locales/es.lua',
-	'locales/sv.lua',
-	'client/main.lua'
+	'client/esx_joblisting_cl.lua'
 }

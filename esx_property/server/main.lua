@@ -163,14 +163,14 @@ AddEventHandler('esx_ownedproperty:getOwnedProperties', function(cb)
 
       for i=1, #result, 1 do
 
-				table.insert(properties, {
-					id     = result[i].id,
-					name   = result[i].name,
-					price  = result[i].price,
-					rented = (result[i].rented == 1 and true or false),
-					owner  = result[i].owner,
-				})
-			end
+        table.insert(properties, {
+          id     = result[i].id,
+          name   = result[i].name,
+          price  = result[i].price,
+          rented = (rented == 1 and true or false),
+          owner  = result[i].owner,
+        })
+      end
 
       cb(properties)
 
@@ -257,32 +257,26 @@ end)
 RegisterServerEvent('esx_property:getItem')
 AddEventHandler('esx_property:getItem', function(owner, type, item, count)
 
-	local _source      = source
-	local xPlayer      = ESX.GetPlayerFromId(_source)
-	local xPlayerOwner = ESX.GetPlayerFromIdentifier(owner)
+  local _source      = source
+  local xPlayer      = ESX.GetPlayerFromId(_source)
+  local xPlayerOwner = ESX.GetPlayerFromIdentifier(owner)
 
-	if type == 'item_standard' then
-		local sourceItem = xPlayer.getInventoryItem(item)
-		
-		TriggerEvent('esx_addoninventory:getInventory', 'property', xPlayerOwner.identifier, function(inventory)
-			local inventoryItem = inventory.getItem(item)
-			
-			-- is there enough in the property?
-			if count > 0 and inventoryItem.count >= count then
-			
-				-- can the player carry the said amount of x item?
-				if sourceItem.limit ~= -1 and (sourceItem.count + count) > sourceItem.limit then
-					TriggerClientEvent('esx:showNotification', _source, _U('player_cannot_hold'))
-				else
-					inventory.removeItem(item, count)
-					xPlayer.addInventoryItem(item, count)
-					TriggerClientEvent('esx:showNotification', _source, _U('have_withdrawn', count, inventoryItem.label))
-				end
-			else
-				TriggerClientEvent('esx:showNotification', _source, _U('not_enough_in_property'))
-			end
-		end)
-	end
+  if type == 'item_standard' then
+
+    TriggerEvent('esx_addoninventory:getInventory', 'property', xPlayerOwner.identifier, function(inventory)
+
+      local roomItemCount = inventory.getItem(item).count
+
+      if roomItemCount >= count then
+        inventory.removeItem(item, count)
+        xPlayer.addInventoryItem(item, count)
+      else
+        TriggerClientEvent('esx:showNotification', _source, _U('invalid_quantity'))
+      end
+
+    end)
+
+  end
 
   if type == 'item_account' then
 
@@ -347,14 +341,14 @@ AddEventHandler('esx_property:putItem', function(owner, type, item, count)
 
     local playerItemCount = xPlayer.getInventoryItem(item).count
 
-    if playerItemCount >= count and count > 0 then
-     
+    if playerItemCount >= count then
+
+      xPlayer.removeInventoryItem(item, count)
+
       TriggerEvent('esx_addoninventory:getInventory', 'property', xPlayerOwner.identifier, function(inventory)
-        xPlayer.removeInventoryItem(item, count)
         inventory.addItem(item, count)
-        TriggerClientEvent('esx:showNotification', _source, _U('have_deposited', count, inventory.getItem(item).label))
       end)
-      
+
     else
       TriggerClientEvent('esx:showNotification', _source, _U('invalid_quantity'))
     end
@@ -365,7 +359,7 @@ AddEventHandler('esx_property:putItem', function(owner, type, item, count)
 
     local playerAccountMoney = xPlayer.getAccount(item).money
 
-    if playerAccountMoney >= count and count > 0 then
+    if playerAccountMoney >= count then
 
       xPlayer.removeAccountMoney(item, count)
 
@@ -496,82 +490,94 @@ end)
 ESX.RegisterServerCallback('esx_property:getPlayerDressing', function(source, cb)
 
   local xPlayer  = ESX.GetPlayerFromId(source)
+  local dressing = {}
 
   TriggerEvent('esx_datastore:getDataStore', 'property', xPlayer.identifier, function(store)
 
-    local count    = store.count('dressing')
-    local labels   = {}
+    local storeDressing = store.get('dressing')
 
-    for i=1, count, 1 do
-      local entry = store.get('dressing', i)
-      table.insert(labels, entry.label)
+    if storeDressing ~= nil then
+      dressing = storeDressing
     end
 
-    cb(labels)
-
   end)
 
-end)
-
-ESX.RegisterServerCallback('esx_property:getPlayerOutfit', function(source, cb, num)
-
-  local xPlayer  = ESX.GetPlayerFromId(source)
-
-  TriggerEvent('esx_datastore:getDataStore', 'property', xPlayer.identifier, function(store)
-    local outfit = store.get('dressing', num)
-    cb(outfit.skin)
-  end)
-
-end)
-
-RegisterServerEvent('esx_property:removeOutfit')
-AddEventHandler('esx_property:removeOutfit', function(label)
-
-    local xPlayer = ESX.GetPlayerFromId(source)
-
-    TriggerEvent('esx_datastore:getDataStore', 'property', xPlayer.identifier, function(store)
-
-        local dressing = store.get('dressing')
-
-        if dressing == nil then
-            dressing = {}
-        end
-
-        label = label
-        
-        table.remove(dressing, label)
-
-        store.set('dressing', dressing)
-
-    end)
+  cb(dressing)
 
 end)
 
 function PayRent(d, h, m)
-	MySQL.Async.fetchAll(
-	'SELECT * FROM owned_properties WHERE rented = 1', {},
-	function (result)
-		for i=1, #result, 1 do
-			local xPlayer = ESX.GetPlayerFromIdentifier(result[i].owner)
 
-			-- message player if connected
-			if xPlayer ~= nil then
-				xPlayer.removeBank(result[i].price)
-				TriggerClientEvent('esx:showNotification', xPlayer.source, _U('paid_rent', result[i].price))
-			else -- pay rent either way
-				MySQL.Sync.execute(
-				'UPDATE users SET bank = bank - @bank WHERE identifier = @identifier',
-				{
-					['@bank']       = result[i].price,
-					['@identifier'] = result[i].owner
-				})
-			end
+  MySQL.Async.fetchAll(
+    'SELECT * FROM users',
+    {},
+    function(_users)
 
-			TriggerEvent('esx_addonaccount:getSharedAccount', 'society_realestateagent', function(account)
-				account.addMoney(result[i].price)
-			end)
-		end
-	end)
+      local prevMoney = {}
+      local newMoney  = {}
+
+      for i=1, #_users, 1 do
+        prevMoney[_users[i].identifier] = _users[i].money
+        newMoney[_users[i].identifier]  = _users[i].money
+      end
+
+      MySQL.Async.fetchAll(
+        'SELECT * FROM owned_properties WHERE rented = 1',
+        {},
+        function(result)
+
+          local xPlayers = ESX.GetPlayers()
+
+          for i=1, #result, 1 do
+
+            local foundPlayer = false
+            local xPlayer     = nil
+
+            for j=1, #xPlayers, 1 do
+
+              local xPlayer2 = ESX.GetPlayerFromId(xPlayers[j])
+
+              if xPlayer2.identifier == result[i].owner then
+                foundPlayer = true
+                xPlayer     = xPlayer2
+              end
+            end
+
+            if foundPlayer then
+
+              xPlayer.removeMoney(result[i].price)
+              TriggerClientEvent('esx:showNotification', xPlayer.source, _U('paid_rent') .. result[i].price)
+
+            else
+              newMoney[result[i].owner] = newMoney[result[i].owner] - result[i].price
+            end
+
+            TriggerEvent('esx_addonaccount:getSharedAccount', 'society_realestateagent', function(account)
+              account.addMoney(result[i].price)
+            end)
+
+          end
+
+          for k,v in pairs(prevMoney) do
+            if v ~= newMoney[k] then
+
+              MySQL.Async.execute(
+                'UPDATE users SET money = @money WHERE identifier = @identifier',
+                {
+                  ['@money']      = newMoney[k],
+                  ['@identifier'] = k
+                }
+              )
+
+            end
+          end
+
+        end
+      )
+
+    end
+  )
+
 end
 
 TriggerEvent('cron:runAt', 22, 0, PayRent)

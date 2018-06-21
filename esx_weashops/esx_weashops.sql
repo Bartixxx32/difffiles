@@ -14,6 +14,15 @@ INSERT INTO `licenses` (type, label) VALUES
   ('weapon', "Permis de port d'arme")
 ;
 
+INSERT INTO `items` (`name`, `label`) VALUES 
+('clip', 'Chargeur'),
+('yusuf', 'Yusuf'),
+('grip', 'Grip'),
+('flashlight', 'Flashlight'),
+('silencieux', 'Silencer')
+;
+
+
 INSERT INTO `weashops` (name, item, price) VALUES
 	('GunShop','WEAPON_PISTOL',300),
 	('BlackWeashop','WEAPON_PISTOL',500),
@@ -25,34 +34,21 @@ INSERT INTO `weashops` (name, item, price) VALUES
 	('BlackWeashop', 'WEAPON_NIGHTSTICK', 150),
 	('GunShop', 'WEAPON_BAT', 100),
 	('BlackWeashop', 'WEAPON_BAT', 100),
-	('GunShop', 'WEAPON_STUNGUN', 50),
-	('BlackWeashop', 'WEAPON_STUNGUN', 50),
-	('GunShop', 'WEAPON_MICROSMG', 1400),
-	('BlackWeashop', 'WEAPON_MICROSMG', 1700),
-	('GunShop', 'WEAPON_PUMPSHOTGUN', 3400),
-	('BlackWeashop', 'WEAPON_PUMPSHOTGUN', 3500),
-	('GunShop', 'WEAPON_ASSAULTRIFLE', 10000),
-	('BlackWeashop', 'WEAPON_ASSAULTRIFLE', 11000),
-	('GunShop', 'WEAPON_SPECIALCARBINE', 15000),
-	('BlackWeashop', 'WEAPON_SPECIALCARBINE', 16500),
-	('GunShop', 'WEAPON_SNIPERRIFLE', 22000),
-	('BlackWeashop', 'WEAPON_SNIPERRIFLE', 24000),
-	('GunShop', 'WEAPON_FIREWORK', 18000),
-	('BlackWeashop', 'WEAPON_FIREWORK', 20000),
-	('GunShop', 'WEAPON_GRENADE', 500),
-	('BlackWeashop', 'WEAPON_GRENADE', 650),
-	('GunShop', 'WEAPON_BZGAS', 200),
-	('BlackWeashop', 'WEAPON_BZGAS', 350),
+	('GunShop', 'WEAPON_MICROSMG', 45000),
+	('BlackWeashop', 'WEAPON_MICROSMG', 45000),
+	('GunShop', 'WEAPON_PUMPSHOTGUN', 25000),
+	('BlackWeashop', 'WEAPON_PUMPSHOTGUN', 25000),
+	('GunShop', 'WEAPON_ASSAULTRIFLE', 85000),
+	('BlackWeashop', 'WEAPON_ASSAULTRIFLE', 85000),
+	('GunShop', 'WEAPON_SPECIALCARBINE', 95000),
+	('BlackWeashop', 'WEAPON_SPECIALCARBINE', 95000),
+	('GunShop', 'WEAPON_SNIPERRIFLE', 110000),
+	('BlackWeashop', 'WEAPON_SNIPERRIFLE', 110000),
+	('GunShop', 'WEAPON_FIREWORK', 30000),
+	('BlackWeashop', 'WEAPON_FIREWORK', 30000),
 	('GunShop', 'WEAPON_FIREEXTINGUISHER', 100),
 	('BlackWeashop', 'WEAPON_FIREEXTINGUISHER', 100),
 	('GunShop', 'WEAPON_BALL', 50),
 	('BlackWeashop', 'WEAPON_BALL', 50),
-	('GunShop', 'WEAPON_SMOKEGRENADE', 100),
-	('BlackWeashop', 'WEAPON_SMOKEGRENADE', 100),
-	('BlackWeashop', 'WEAPON_APPISTOL', 1100),
-	('BlackWeashop', 'WEAPON_CARBINERIFLE', 12000),
-	('BlackWeashop', 'WEAPON_HEAVYSNIPER', 30000),
-	('BlackWeashop', 'WEAPON_MINIGUN', 45000),
-	('BlackWeashop', 'WEAPON_RAILGUN', 50000),
-	('BlackWeashop', 'WEAPON_STICKYBOMB', 500)
+	('GunShop', 'WEAPON_SMOKEGRENADE', 100)
 ;

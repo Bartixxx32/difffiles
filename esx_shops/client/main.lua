@@ -4,76 +4,65 @@ local LastZone                = nil
 local CurrentAction           = nil
 local CurrentActionMsg        = ''
 local CurrentActionData       = {}
-local PlayerData              = {}
 
 Citizen.CreateThread(function()
 	while ESX == nil do
 		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 		Citizen.Wait(0)
 	end
+end)
 
-	Citizen.Wait(5000)
-	PlayerData = ESX.GetPlayerData()
+AddEventHandler('onClientMapStart', function()
 
-	ESX.TriggerServerCallback('esx_shops:requestDBItems', function(ShopItems)
+	ESX.TriggerServerCallback('esx_shop:requestDBItems', function(ShopItems)
 		for k,v in pairs(ShopItems) do
 			Config.Zones[k].Items = v
 		end
 	end)
+
 end)
 
 function OpenShopMenu(zone)
-	PlayerData = ESX.GetPlayerData()
 
 	local elements = {}
+
 	for i=1, #Config.Zones[zone].Items, 1 do
+
 		local item = Config.Zones[zone].Items[i]
 
 		table.insert(elements, {
-			label      = item.label .. ' - <span style="color: green;">$' .. item.price .. '</span>',
-			label_real = item.label,
-			item       = item.item,
-			price      = item.price,
-
-			-- menu properties
-			value      = 1,
-			type       = 'slider',
-			min        = 1,
-			max        = item.limit
+			label     = item.label .. ' - <span style="color:green;">$' .. item.price .. ' </span>',
+			realLabel = item.label,
+			value     = item.name,
+			price     = item.price
 		})
+
 	end
 
-	ESX.UI.Menu.CloseAll()
-	ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'shop', {
-		title    = _U('shop'),
-		align    = 'bottom-right',
-		elements = elements
-	}, function(data, menu)
-		ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'shop_confirm', {
-			title    = _U('shop_confirm', data.current.value, data.current.label_real, data.current.price * data.current.value),
-			align    = 'bottom-right',
-			elements = {
-				{label = _U('no'),  value = 'no'},
-				{label = _U('yes'), value = 'yes'}
-			}
-		}, function(data2, menu2)
-			if data2.current.value == 'yes' then
-				TriggerServerEvent('esx_shops:buyItem', data.current.item, data.current.value, zone)
-			end
 
-			menu2.close()
-		end, function(data2, menu2)
-			menu2.close()
-		end)
-	end, function(data, menu)
-		menu.close()
-		CurrentAction     = 'shop_menu'
-		CurrentActionMsg  = _U('press_menu')
-		CurrentActionData = {zone = zone}
-	end)
+	ESX.UI.Menu.CloseAll()
+
+	ESX.UI.Menu.Open(
+		'default', GetCurrentResourceName(), 'shop',
+		{
+			title  = _U('shop'),
+			elements = elements
+		},
+		function(data, menu)
+			TriggerServerEvent('esx_shop:buyItem', data.current.value, data.current.price)
+		end,
+		function(data, menu)
+
+			menu.close()
+
+			CurrentAction     = 'shop_menu'
+			CurrentActionMsg  = _U('press_menu')
+			CurrentActionData = {zone = zone}
+		end
+	)
 end
 
-AddEventHandler('esx_shops:hasEnteredMarker', function(zone)
+AddEventHandler('esx_shop:hasEnteredMarker', function(zone)
 
 	CurrentAction     = 'shop_menu'
 	CurrentActionMsg  = _U('press_menu')
@@ -81,7 +70,7 @@ AddEventHandler('esx_shops:hasEnteredMarker', function(zone)
 
 end)
 
-AddEventHandler('esx_shops:hasExitedMarker', function(zone)
+AddEventHandler('esx_shop:hasExitedMarker', function(zone)
 
 	CurrentAction = nil
 	ESX.UI.Menu.CloseAll()
@@ -108,7 +97,7 @@ end)
 -- Display markers
 Citizen.CreateThread(function()
   while true do
-    Citizen.Wait(10)
+    Wait(0)
     local coords = GetEntityCoords(GetPlayerPed(-1))
     for k,v in pairs(Config.Zones) do
       for i = 1, #v.Pos, 1 do
@@ -123,7 +112,7 @@ end)
 -- Enter / Exit marker events
 Citizen.CreateThread(function()
 	while true do
-		Citizen.Wait(10)
+		Wait(0)
 		local coords      = GetEntityCoords(GetPlayerPed(-1))
 		local isInMarker  = false
 		local currentZone = nil
@@ -140,11 +129,11 @@ Citizen.CreateThread(function()
 		end
 		if isInMarker and not HasAlreadyEnteredMarker then
 			HasAlreadyEnteredMarker = true
-			TriggerEvent('esx_shops:hasEnteredMarker', currentZone)
+			TriggerEvent('esx_shop:hasEnteredMarker', currentZone)
 		end
 		if not isInMarker and HasAlreadyEnteredMarker then
 			HasAlreadyEnteredMarker = false
-			TriggerEvent('esx_shops:hasExitedMarker', LastZone)
+			TriggerEvent('esx_shop:hasExitedMarker', LastZone)
 		end
 	end
 end)
@@ -152,7 +141,7 @@ end)
 -- Key Controls
 Citizen.CreateThread(function()
   while true do
-    Citizen.Wait(10)
+    Citizen.Wait(0)
     if CurrentAction ~= nil then
 
       SetTextComponentFormat('STRING')

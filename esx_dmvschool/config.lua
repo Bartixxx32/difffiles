@@ -12,9 +12,9 @@ Config.Prices = {
 }
 
 Config.VehicleModels = {
-  drive       = 'blista',
-  drive_bike  = 'sanchez',
-  drive_truck = 'mule3'
+  drive       = 'futo',
+  drive_bike  = 'faggio',
+  drive_truck = 'pounder'
 }
 
 Config.SpeedLimits = {

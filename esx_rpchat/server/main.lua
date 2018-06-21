@@ -1,54 +1,78 @@
-AddEventHandler('chatMessage', function(source, name, msg)
-	local command = stringsplit(msg, " ")[1];
+--[[
 
-	if command == "/ooc" then
-		CancelEvent()
-		if Config.EnableESXIdentity then name = GetCharacterName(source) end
-		TriggerClientEvent('chatMessage', -1, _U('ooc_prefix', name), { 128, 128, 128 }, string.sub(msg, 5))
-	elseif command == "/twt" then
-		CancelEvent()
-		if Config.EnableESXIdentity then name = GetCharacterName(source) end
-		TriggerClientEvent('chatMessage', -1, _U('twt_prefix', name), { 0, 153, 204 }, string.sub(msg, 5))
-	elseif command == "/me" then
-		CancelEvent()
-		if Config.EnableESXIdentity then name = GetCharacterName(source) end
-		TriggerClientEvent('esx_rpchat:sendProximityMessage', -1, source, _U('me_prefix', name), string.sub(msg, 4), { 255, 0, 0 })
-	elseif command == "/news" then
-		CancelEvent()
-		if Config.EnableESXIdentity then name = GetCharacterName(source) end
-		TriggerClientEvent('chatMessage', -1, _U('news_prefix', name), { 249, 166, 0 }, string.sub(msg, 6))
-	elseif string.sub(command, 1, 1) == "/" then
-		CancelEvent()
-		TriggerClientEvent('chatMessage', source, '', {132, 13, 37}, _U('ooc_unknown_command', command))
-	end
-end)
+  ESX RP Chat
 
-function stringsplit(inputstr, sep)
-	if sep == nil then
-		sep = "%s"
-	end
-	local t={} ; i=1
-	for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-		t[i] = str
-		i = i + 1
-	end
-	return t
+--]]
+
+function getIdentity(source, callback)
+  local identifier = GetPlayerIdentifiers(source)[1]
+  MySQL.Async.fetchAll("SELECT * FROM `users` WHERE `identifier` = @identifier", {['@identifier'] = identifier},
+  function(result)
+    if result[1]['firstname'] ~= nil then
+      local data = {
+        identifier    = result[1]['identifier'],
+        firstname     = result[1]['firstname'],
+        lastname      = result[1]['lastname'],
+        dateofbirth   = result[1]['dateofbirth'],
+        sex           = result[1]['sex'],
+        height        = result[1]['height']
+      }
+      callback(data)
+    else
+      local data = {
+        identifier    = '',
+        firstname     = '',
+        lastname      = '',
+        dateofbirth   = '',
+        sex           = '',
+        height        = ''
+      }
+      callback(data)
+    end
+  end)
 end
 
-function GetCharacterName(source)
-	-- fetch identity in sync
-	local result = MySQL.Sync.fetchAll('SELECT * FROM users WHERE identifier = @identifier',
-	{
-		['@identifier'] = GetPlayerIdentifiers(source)[1]
-	})
+AddEventHandler('chatMessage', function(source, name, message)
+  getIdentity(source, function(data)
+    if string.sub(message, 1, string.len("/")) ~= "/" then
+      TriggerClientEvent("sendProximityMessage", -1, source, data.firstname, message)
+    end
+  end)
+  CancelEvent()
+end)
 
-	if result[1] ~= nil and result[1].firstname ~= nil and result[1].lastname ~= nil then
-		if Config.OnlyFirstname then
-			return result[1].firstname
-		else
-			return result[1].firstname .. ' ' .. result[1].lastname
-		end
-	else
-		return GetPlayerName(source)
-	end
+TriggerEvent('es:addCommand', 'me', function(source, args, user)
+    table.remove(args, 1)
+    getIdentity(source, function(data)
+      TriggerClientEvent("sendProximityMessageMe", -1, source, data.firstname, table.concat(args, " "))
+    end)
+end)
+
+TriggerEvent('es:addCommand', 'do', function(source, args, user)
+    table.remove(args, 1)
+    getIdentity(source, function(data)
+      TriggerClientEvent("sendProximityMessageDo", -1, source, data.firstname, table.concat(args, " "))
+    end)
+end)
+
+TriggerEvent('es:addCommand', 'twt', function(source, args, user)
+  table.remove(args, 1)
+  TriggerClientEvent('chatMessage', -1, "^0[^4Twitter^0] (^5@" .. GetPlayerName(source) .. "^0)", {30, 144, 255}, table.concat(args, " "))
+end, {help = 'Send a tweet. [IC]'})
+
+TriggerEvent('es:addCommand', 'ooc', function(source, args, user)
+  table.remove(args, 1)
+  TriggerClientEvent('chatMessage', -1, "OOC | " .. GetPlayerName(source), {128, 128, 128}, table.concat(args, " "))
+end, {help = 'Send an out of character message to the whole server.'})
+
+function stringsplit(inputstr, sep)
+  if sep == nil then
+    sep = "%s"
+  end
+  local t={} ; i=1
+  for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+    t[i] = str
+    i = i + 1
+  end
+  return t
 end

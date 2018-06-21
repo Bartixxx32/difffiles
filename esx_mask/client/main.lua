@@ -119,7 +119,15 @@ AddEventHandler('playerSpawned', function()
 	IsDead = false
 end)
 
-AddEventHandler('esx:onPlayerDeath', function()
+AddEventHandler('baseevents:onPlayerDied', function(killerType, coords)
+	TriggerEvent('esx_ambulancejob:onPlayerDeath')
+end)
+
+AddEventHandler('baseevents:onPlayerKilled', function(killerId, data)
+	TriggerEvent('esx_ambulancejob:onPlayerDeath')
+end)
+
+AddEventHandler('esx_ambulancejob:onPlayerDeath', function()
 	IsDead = true
 end)
 
@@ -158,7 +166,7 @@ end)
 Citizen.CreateThread(function()
 	while true do
 		
-		Citizen.Wait(0)
+		Wait(0)
 		
 		local coords = GetEntityCoords(GetPlayerPed(-1))
 		
@@ -175,7 +183,7 @@ end)
 Citizen.CreateThread(function()
 	while true do
 		
-		Citizen.Wait(10)
+		Wait(0)
 		
 		local coords      = GetEntityCoords(GetPlayerPed(-1))
 		local isInMarker  = false
@@ -206,7 +214,7 @@ end)
 Citizen.CreateThread(function()
 	while true do
 
-		Citizen.Wait(10)
+		Citizen.Wait(0)
 
 		if CurrentAction ~= nil then
 
@@ -252,11 +260,6 @@ Citizen.CreateThread(function()
 								mask_1 = maskSkin.mask_1,
 								mask_2 = maskSkin.mask_2
 							})
-
-                            local player = GetPlayerPed(-1)
-                            SetPedPropIndex(player, 1, 0, 0, 0)
-                            SetPedPropIndex(player, 2, -1, 0, 0)
-                            ClearPedProp(player, 0)
 						
 						else
 							ESX.ShowNotification(_U('no_mask'))

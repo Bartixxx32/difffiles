@@ -51,6 +51,12 @@ AddEventHandler('esx_phone:getDistpatchRequestId', function(cb)
   cb(GetDistpatchRequestId())
 end)
 
+AddEventHandler('onResourceStart', function(ressource)
+  if ressource == 'esx_phone' then
+    TriggerEvent('esx_phone:ready')
+  end
+end)
+
 AddEventHandler('esx:playerLoaded', function(source)
 
   local xPlayer = ESX.GetPlayerFromId(source)
@@ -204,87 +210,36 @@ AddEventHandler('esx_phone:send', function(phoneNumber, message, anon, position)
 end)
 
 AddEventHandler('esx_phone:registerNumber', function(number, type, sharePos, hasDispatch, hideNumber, hidePosIfAnon)
-	local hideNumber    = hideNumber    or false
-	local hidePosIfAnon = hidePosIfAnon or false
 
-	PhoneNumbers[number] = {
-		type          = type,
-		sharePos      = sharePos,
-		hasDispatch   = (hasDispatch or false),
-		hideNumber    = hideNumber,
-		hidePosIfAnon = hidePosIfAnon,
-		sources       = {}
-	}
+  local hideNumber    = hideNumber    or false
+  local hidePosIfAnon = hidePosIfAnon or false
+
+  PhoneNumbers[number] = {
+    type          = type,
+    sharePos      = sharePos,
+    hasDispatch   = (hasDispatch or false),
+    hideNumber    = hideNumber,
+    hidePosIfAnon = hidePosIfAnon,
+    sources       = {}
+  }
+
 end)
 
 AddEventHandler('esx_phone:addSource', function(number, source)
-	PhoneNumbers[number].sources[tostring(source)] = true
+  PhoneNumbers[number].sources[tostring(source)] = true
 end)
 
 AddEventHandler('esx_phone:removeSource', function(number, source)
-	PhoneNumbers[number].sources[tostring(source)] = nil
+  PhoneNumbers[number].sources[tostring(source)] = nil
 end)
 
 RegisterServerEvent('esx_phone:addPlayerContact')
 AddEventHandler('esx_phone:addPlayerContact', function(phoneNumber, contactName)
-	local _source = source
-	local xPlayer = ESX.GetPlayerFromId(_source)
-	phoneNumber   = tonumber(phoneNumber)
-	
-	-- is the player trying to enter something else into the database?
-	if phoneNumber == nil then
-		print('esx_phone: ' .. xPlayer.identifier .. ' attempted to crash the database!')
-		return
-	end
 
-	MySQL.Async.fetchAll(
-	'SELECT phone_number FROM users WHERE phone_number = @number',
-	{
-		['@number'] = phoneNumber
-	}, function(result)
-		if result[1] ~= nil then
-			if phoneNumber == xPlayer.get('phoneNumber') then
-				TriggerClientEvent('esx:showNotification', _source, _U('cannot_add_self'))
-			else
-				local contacts  = xPlayer.get('contacts')
-
-				for i=1, #contacts, 1 do
-					if contacts[i].number == phoneNumber then
-						TriggerClientEvent('esx:showNotification', _source, _U('number_in_contacts'))
-						return
-					end
-				end
-
-				table.insert(contacts, {
-					name   = contactName,
-					number = phoneNumber,
-				})
-
-				xPlayer.set('contacts', contacts)
-
-				MySQL.Async.execute(
-				'INSERT INTO user_contacts (identifier, name, number) VALUES (@identifier, @name, @number)',
-				{
-					['@identifier'] = xPlayer.identifier,
-					['@name']       = contactName,
-					['@number']     = phoneNumber
-				}, function(rowsChanged)
-					TriggerClientEvent('esx:showNotification', _source, _U('contact_added'))
-					TriggerClientEvent('esx_phone:addContact', _source, contactName, phoneNumber)
-				end)
-			end
-		-- there's a bug with mysql-async where some statements will break everything...
-		--else
-			--TriggerClientEvent('esx:showNotification', _source, _U('number_not_assigned'))
-		end
-	end)
-end)
-
-RegisterServerEvent('esx_phone:removePlayerContact')
-AddEventHandler('esx_phone:removePlayerContact', function(phoneNumber, contactName)
   local _source     = source
   local xPlayer     = ESX.GetPlayerFromId(_source)
   local foundNumber = false
+  local foundPlayer = nil
 
   MySQL.Async.fetchAll(
     'SELECT phone_number FROM users WHERE phone_number = @number',
@@ -299,30 +254,48 @@ AddEventHandler('esx_phone:removePlayerContact', function(phoneNumber, contactNa
 
       if foundNumber then
 
-        local contacts        = xPlayer.get('contacts')
+        if phoneNumber == xPlayer.get('phoneNumber') then
+          TriggerClientEvent('esx:showNotification', _source, _U('cannot_add_self'))
+        else
 
-        for key, value in pairs(contacts) do
-          if value.name == contactName and value.number == phoneNumber then
-            table.remove(contacts,key)
+          local hasAlreadyAdded = false
+          local contacts        = xPlayer.get('contacts')
+
+          for i=1, #contacts, 1 do
+            if contacts[i].number == phoneNumber then
+              hasAlreadyAdded = true
+            end
+          end
+
+          if hasAlreadyAdded then
+            TriggerClientEvent('esx:showNotification', _source, _U('number_in_contacts'))
+          else
+
+            table.insert(contacts, {
+              name   = contactName,
+              number = phoneNumber,
+            })
+
+            xPlayer.set('contacts', contacts)
+
+            MySQL.Async.execute(
+              'INSERT INTO user_contacts (identifier, name, number) VALUES (@identifier, @name, @number)',
+              {
+                ['@identifier'] = xPlayer.identifier,
+                ['@name']       = contactName,
+                ['@number']     = phoneNumber
+              },
+              function(rowsChanged)
+
+                TriggerClientEvent('esx:showNotification', _source, _U('contact_added'))
+
+                TriggerClientEvent('esx_phone:addContact', _source, contactName, phoneNumber)
+              end
+            )
+
           end
         end
 
-        xPlayer.set('contacts', contacts)
-
-        MySQL.Async.execute(
-          'DELETE FROM user_contacts WHERE identifier=@identifier AND name=@name AND number=@number',
-          {
-            ['@identifier'] = xPlayer.identifier,
-            ['@name']       = contactName,
-            ['@number']     = phoneNumber
-          },
-          function(rowsChanged)
-
-            TriggerClientEvent('esx:showNotification', _source, _U('contact_removed'))
-
-            TriggerClientEvent('esx_phone:removeContact', _source, contactName, phoneNumber)
-          end
-        )
       else
         TriggerClientEvent('esx:showNotification', source, _U('number_not_assigned'))
       end

@@ -2,30 +2,33 @@ Config              = {}
 Config.MarkerType   = 1
 Config.DrawDistance = 100.0
 Config.ZoneSize     = {x = 5.0, y = 5.0, z = 3.0}
-Config.MarkerColor  = {r = 100, g = 204, b = 100}
-
-Config.RequiredCopsCoke  = 2
-Config.RequiredCopsMeth  = 2
-Config.RequiredCopsWeed  = 2
-Config.RequiredCopsOpium = 2
-
-Config.TimeToFarm    = 17 * 1000
-Config.TimeToProcess = 46 * 1000
-Config.TimeToSell    = 5  * 1000
-
+--Config.MarkerColor  = {r = 100, g = 204, b = 100}
+Config.RequiredCopsCoke = 0
+Config.RequiredCopsMeth = 0
+Config.RequiredCopsWeed = 0
+Config.RequiredCopsOpium = 0
 Config.Locale = 'en'
 
 Config.Zones = {
-	CokeField =			{x = 2448.92,	y = -1836.80,	z = 51.95,	name = _U('coke_field'),		sprite = 501,	color = 40},
-	CokeProcessing =	{x = -458.13,	y = -2278.61,	z = 7.51,	name = _U('coke_processing'),	sprite = 478,	color = 40},
-	CokeDealer =		{x = -1756.19,	y = 427.31,		z =126.68,	name = _U('coke_dealer'),		sprite = 500,	color = 75},
-	MethField =			{x = 1525.29,	y = 1710.02,	z = 109.00,	name = _U('meth_field'),		sprite = 499,	color = 26},
-	MethProcessing =	{x = -1001.41,	y = 4848.00,	z = 274.00,	name = _U('meth_processing'),	sprite = 499,	color = 26},
-	MethDealer =		{x = -63.59,	y = -1224.07,	z = 27.76,	name = _U('meth_dealer'),		sprite = 500,	color = 75},
-	WeedField =			{x = 1609.12,	y = 6663.59,	z = 20.96,	name = _U('weed_field'),		sprite = 496,	color = 52},
-	WeedProcessing =	{x = 91.06,		y = 3750.03,	z = 39.77,	name = _U('weed_processing'),	sprite = 496,	color = 52},
-	WeedDealer =		{x = -54.24,	y = -1443.36,	z = 31.06,	name = _U('weed_dealer'),		sprite = 500,	color = 75},
-	OpiumField =		{x = 1972.78,	y = 3819.39,	z = 32.50,	name = _U('opium_field'),		sprite = 51,	color = 60},
-	OpiumProcessing =	{x = 971.86,	y = -2157.00,	z = 28.47,	name = _U('opium_processing'),	sprite = 51,	color = 60},
-	OpiumDealer =		{x = 2331.08,	y = 2570.22,	z = 46.68,	name = _U('opium_dealer'),		sprite = 500,	color = 75}
+	MethFarm = 		 {x=1525.298828125,   y=1710.0217285156,  z=109.00956726074},
+	MethTreatment =  {x=-1001.4151611328, y=4848.0087890625,  z=274.00686645508},
+	MethResell = 	 {x=-63.592178344727, y=-1224.0709228516, z=27.768648147583},
+	WeedFarm = 		 {x=2229.4272460938,  y=5575.8627929688,  z=53.757167816162},
+	WeedTreatment =  {x=2468.1989746094,  y=3783.4223632813,  z=40.914752960205},
+	WeedResell = 	 {x=-54.249694824219, y=-1443.3666992188, z=31.068626403809},
+	OpiumFarm = 	 {x=1972.784790039,	  y=3819.3999023438,  z=33.428722381592},
+	OpiumTreatment = {x=971.86499023438,  y=-2157.61328125,   z=28.475107192994},
+	OpiumResell = 	 {x=2331.0881347656,  y=2570.2250976562,  z=46.681819915772}
+}
+
+Config.Map = {
+  {name="Meth Farm",       color=6, scale=0.8, id=403, x=1525.298828125,   y=1710.0217285156,  z=109.00956726074},
+  {name="Meth Treatment",  color=6, scale=0.8, id=403, x=-1001.4151611328, y=4848.0087890625,  z=274.00686645508},
+  {name="Meth Sales",      color=6, scale=0.8, id=403, x=-63.592178344727, y=-1224.0709228516, z=27.768648147583},
+  {name="Opium Farm",      color=6, scale=0.8, id=403, x=1972.784790039,   y=3819.3999023438,  z=33.428722381592},
+  {name="Opium Treatment", color=6, scale=0.8, id=403, x=971.86499023438,  y=-2157.61328125,   z=28.475107192994},
+  {name="Opium Sales",     color=6, scale=0.8, id=403, x=2331.0881347656,  y=2570.2250976562,  z=46.681819915772},
+  {name="Weed Farm",       color=2, scale=0.8, id=140, x=2229.4272460938,  y=5575.8627929688,  z=53.757167816162},
+  {name="Weed Treatment",  color=2, scale=0.8, id=140, x=2467.8371582031,  y=3784.6157226563,  z=40.981040954591},
+  {name="Weed Sales",      color=2, scale=0.8, id=140, x=-54.249694824219, y=-1443.3666992188, z=31.068626403809}
 }

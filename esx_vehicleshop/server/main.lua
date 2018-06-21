@@ -5,7 +5,7 @@ local Vehicles   = {}
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
 TriggerEvent('esx_phone:registerNumber', 'cardealer', _U('dealer_customers'), false, false)
-TriggerEvent('esx_society:registerSociety', 'cardealer', _U('car_dealer'), 'society_cardealer', 'society_cardealer', 'society_cardealer', {type = 'private'})
+TriggerEvent('esx_society:registerSociety', 'cardealer', 'Concessionnaire', 'society_cardealer', 'society_cardealer', 'society_cardealer', {type = 'private'})
 
 function RemoveOwnedVehicle (plate)
   MySQL.Async.fetchAll(
@@ -55,7 +55,7 @@ AddEventHandler('esx_vehicleshop:setVehicleOwned', function (vehicleProps)
       ['@owner']   = xPlayer.identifier,
     },
     function (rowsChanged)
-      TriggerClientEvent('esx:showNotification', _source, _U('vehicle_belongs', vehicleProps.plate))
+      TriggerClientEvent('esx:showNotification', _source, _U('vehicle').. vehicleProps.plate .. _('belongs'))
     end
   )
 end)
@@ -71,7 +71,7 @@ AddEventHandler('esx_vehicleshop:setVehicleOwnedPlayerId', function (playerId, v
       ['@owner']   = xPlayer.identifier,
     },
     function (rowsChanged)
-      TriggerClientEvent('esx:showNotification', playerId, _U('vehicle_belongs', vehicleProps.plate))
+      TriggerClientEvent('esx:showNotification', playerId, _U('vehicle') .. vehicleProps.plate .. _('belongs'))
     end
   )
 end)
@@ -149,46 +149,38 @@ end)
 
 RegisterServerEvent('esx_vehicleshop:getStockItem')
 AddEventHandler('esx_vehicleshop:getStockItem', function (itemName, count)
-	local _source = source
-	local xPlayer = ESX.GetPlayerFromId(_source)
-	local sourceItem = xPlayer.getInventoryItem(itemName)
+  local xPlayer = ESX.GetPlayerFromId(source)
 
-	TriggerEvent('esx_addoninventory:getSharedInventory', 'society_cardealer', function (inventory)
-		local item = inventory.getItem(itemName)
+  TriggerEvent('esx_addoninventory:getSharedInventory', 'society_cardealer', function (inventory)
+    local item = inventory.getItem(itemName)
 
-		-- is there enough in the society?
-		if count > 0 and item.count >= count then
-		
-			-- can the player carry the said amount of x item?
-			if sourceItem.limit ~= -1 and (sourceItem.count + count) > sourceItem.limit then
-				TriggerClientEvent('esx:showNotification', _source, _U('player_cannot_hold'))
-			else
-				inventory.removeItem(itemName, count)
-				xPlayer.addInventoryItem(itemName, count)
-				TriggerClientEvent('esx:showNotification', _source, _U('have_withdrawn', count, item.label))
-			end
-		else
-			TriggerClientEvent('esx:showNotification', _source, _U('not_enough_in_society'))
-		end
-	end)
+    if item.count >= count then
+      inventory.removeItem(itemName, count)
+      xPlayer.addInventoryItem(itemName, count)
+    else
+      TriggerClientEvent('esx:showNotification', xPlayer.source, 'Quantité invalide')
+    end
+
+    TriggerClientEvent('esx:showNotification', xPlayer.source, _U('have_withdrawn') .. ' x' .. count .. ' ' .. item.label)
+  end)
 end)
 
 RegisterServerEvent('esx_vehicleshop:putStockItems')
 AddEventHandler('esx_vehicleshop:putStockItems', function (itemName, count)
-	local _source = source
-	local xPlayer = ESX.GetPlayerFromId(_source)
+  local xPlayer = ESX.GetPlayerFromId(source)
 
-	TriggerEvent('esx_addoninventory:getSharedInventory', 'society_cardealer', function (inventory)
-		local item = inventory.getItem(itemName)
+  TriggerEvent('esx_addoninventory:getSharedInventory', 'society_cardealer', function (inventory)
+    local item = inventory.getItem(itemName)
 
-		if item.count >= 0 then
-			xPlayer.removeInventoryItem(itemName, count)
-			inventory.addItem(itemName, count)
-			TriggerClientEvent('esx:showNotification', _source, _U('have_deposited', count, item.label))
-		else
-			TriggerClientEvent('esx:showNotification', _source, _U('invalid_amount'))
-		end
-	end)
+    if item.count >= 0 then
+      xPlayer.removeInventoryItem(itemName, count)
+      inventory.addItem(itemName, count)
+    else
+      TriggerClientEvent('esx:showNotification', xPlayer.source, 'Quantité invalide')
+    end
+
+    TriggerClientEvent('esx:showNotification', xPlayer.source, _U('added') .. ' x' .. count .. ' ' .. item.label)
+  end)
 end)
 
 ESX.RegisterServerCallback('esx_vehicleshop:getCategories', function (source, cb)
@@ -423,36 +415,70 @@ ESX.RegisterServerCallback('esx_vehicleshop:getPlayerInventory', function (sourc
 end)
 
 if Config.EnablePvCommand then
-	TriggerEvent('es:addGroupCommand', 'pv', 'user', function(source, args, user)
-		TriggerClientEvent('esx_vehicleshop:openPersonnalVehicleMenu', source)
-	end, {help = _U('leaving')})
+  TriggerEvent('es:addCommand', 'pv', function (source, args, user)
+    TriggerClientEvent('esx_vehicleshop:openPersonnalVehicleMenu', source)
+  end, {help = _U('leaving')})
 end
 
-function PayRent()
-	MySQL.Async.fetchAll(
-	'SELECT * FROM rented_vehicles', {},
-	function (result)
-		for i=1, #result, 1 do
-			local xPlayer = ESX.GetPlayerFromIdentifier(result[i].owner)
+function PayRent (d, h, m)
+  MySQL.Async.fetchAll(
+    'SELECT * FROM users',
+    {},
+    function (_users)
+      local prevMoney = {}
+      local newMoney  = {}
 
-			-- message player if connected
-			if xPlayer ~= nil then
-				xPlayer.removeBank(result[i].rent_price)
-				TriggerClientEvent('esx:showNotification', xPlayer.source, _U('paid_rental', result[i].rent_price))
-			else -- pay rent either way
-				MySQL.Sync.execute(
-				'UPDATE users SET bank = bank - @bank WHERE identifier = @identifier',
-				{
-					['@bank']       = result[i].rent_price,
-					['@identifier'] = result[i].owner
-				})
-			end
+      for i=1, #_users, 1 do
+        prevMoney[_users[i].identifier] = _users[i].money
+        newMoney[_users[i].identifier]  = _users[i].money
+      end
 
-			TriggerEvent('esx_addonaccount:getSharedAccount', 'society_cardealer', function(account)
-				account.addMoney(result[i].rent_price)
-			end)
-		end
-	end)
+      MySQL.Async.fetchAll(
+        'SELECT * FROM rented_vehicles',
+        {},
+        function (result)
+          local xPlayers = ESX.GetPlayers()
+
+          for i=1, #result, 1 do
+            local foundPlayer = false
+            local xPlayer     = nil
+
+            for i=1, #xPlayers, 1 do
+              local xPlayer2 = ESX.GetPlayerFromId(xPlayers[i])
+
+              if xPlayer2.identifier == result[i].owner then
+                foundPlayer = true
+                xPlayer     = xPlayer2
+              end
+            end
+
+            if foundPlayer then
+              xPlayer.removeMoney(result[i].rent_price)
+              TriggerClientEvent('esx:showNotification', xPlayer.source, _U('paid_rental') .. result[i].rent_price)
+            else
+              newMoney[result[i].owner] = newMoney[result[i].owner] - result[i].rent_price
+            end
+
+            TriggerEvent('esx_addonaccount:getSharedAccount', 'society_cardealer', function(account)
+              account.addMoney(result[i].rent_price)
+            end)
+          end
+
+          for k,v in pairs(prevMoney) do
+            if v ~= newMoney[k] then
+              MySQL.Async.execute(
+                'UPDATE users SET money = @money WHERE identifier = @identifier',
+                {
+                  ['@money']      = newMoney[k],
+                  ['@identifier'] = k,
+                }
+              )
+            end
+          end
+        end
+      )
+    end
+  )
 end
 
 TriggerEvent('cron:runAt', 22, 00, PayRent)

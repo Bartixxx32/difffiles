@@ -15,6 +15,8 @@ end
 TriggerEvent('esx_phone:registerNumber', 'mecano', _U('mechanic_customer'), true, true)
 TriggerEvent('esx_society:registerSociety', 'mecano', 'Mecano', 'society_mecano', 'society_mecano', 'society_mecano', {type = 'private'})
 
+-------------- Récupération bouteille de gaz -------------
+---- Sqlut je teste ------
 local function Harvest(source)
 
   SetTimeout(4000, function()
@@ -27,7 +29,8 @@ local function Harvest(source)
       if GazBottleQuantity >= 5 then
         TriggerClientEvent('esx:showNotification', source, _U('you_do_not_room'))
       else
-        xPlayer.addInventoryItem('gazbottle', 1)
+                xPlayer.addInventoryItem('gazbottle', 1)
+
         Harvest(source)
       end
     end
@@ -59,7 +62,8 @@ local function Harvest2(source)
       if FixToolQuantity >= 5 then
         TriggerClientEvent('esx:showNotification', source, _U('you_do_not_room'))
       else
-        xPlayer.addInventoryItem('fixtool', 1)
+                xPlayer.addInventoryItem('fixtool', 1)
+
         Harvest2(source)
       end
     end
@@ -79,7 +83,7 @@ AddEventHandler('esx_mecanojob:stopHarvest2', function()
   local _source = source
   PlayersHarvesting2[_source] = false
 end)
-
+----------------- Récupération Outils Carosserie ----------------
 local function Harvest3(source)
 
   SetTimeout(4000, function()
@@ -88,10 +92,11 @@ local function Harvest3(source)
 
       local xPlayer  = ESX.GetPlayerFromId(source)
       local CaroToolQuantity  = xPlayer.getInventoryItem('carotool').count
-      if CaroToolQuantity >= 5 then
+            if CaroToolQuantity >= 5 then
         TriggerClientEvent('esx:showNotification', source, _U('you_do_not_room'))
       else
-        xPlayer.addInventoryItem('carotool', 1)
+                xPlayer.addInventoryItem('carotool', 1)
+
         Harvest3(source)
       end
     end
@@ -111,7 +116,7 @@ AddEventHandler('esx_mecanojob:stopHarvest3', function()
   local _source = source
   PlayersHarvesting3[_source] = false
 end)
-
+------------ Craft Chalumeau -------------------
 local function Craft(source)
 
   SetTimeout(4000, function()
@@ -124,8 +129,9 @@ local function Craft(source)
       if GazBottleQuantity <= 0 then
         TriggerClientEvent('esx:showNotification', source, _U('not_enough_gas_can'))
       else
-        xPlayer.removeInventoryItem('gazbottle', 1)
-        xPlayer.addInventoryItem('blowpipe', 1)
+                xPlayer.removeInventoryItem('gazbottle', 1)
+                xPlayer.addInventoryItem('blowpipe', 1)
+
         Craft(source)
       end
     end
@@ -145,7 +151,7 @@ AddEventHandler('esx_mecanojob:stopCraft', function()
   local _source = source
   PlayersCrafting[_source] = false
 end)
-
+------------ Craft kit Réparation --------------
 local function Craft2(source)
 
   SetTimeout(4000, function()
@@ -157,8 +163,9 @@ local function Craft2(source)
       if FixToolQuantity <= 0 then
         TriggerClientEvent('esx:showNotification', source, _U('not_enough_repair_tools'))
       else
-        xPlayer.removeInventoryItem('fixtool', 1)
-        xPlayer.addInventoryItem('fixkit', 1)
+                xPlayer.removeInventoryItem('fixtool', 1)
+                xPlayer.addInventoryItem('fixkit', 1)
+
         Craft2(source)
       end
     end
@@ -178,7 +185,7 @@ AddEventHandler('esx_mecanojob:stopCraft2', function()
   local _source = source
   PlayersCrafting2[_source] = false
 end)
-
+----------------- Craft kit Carosserie ----------------
 local function Craft3(source)
 
   SetTimeout(4000, function()
@@ -190,8 +197,9 @@ local function Craft3(source)
             if CaroToolQuantity <= 0 then
         TriggerClientEvent('esx:showNotification', source, _U('not_enough_body_tools'))
       else
-        xPlayer.removeInventoryItem('carotool', 1)
-        xPlayer.addInventoryItem('carokit', 1)
+                xPlayer.removeInventoryItem('carotool', 1)
+                xPlayer.addInventoryItem('carokit', 1)
+
         Craft3(source)
       end
     end
@@ -212,6 +220,8 @@ AddEventHandler('esx_mecanojob:stopCraft3', function()
   PlayersCrafting3[_source] = false
 end)
 
+---------------------------- NPC Job Earnings ------------------------------------------------------
+
 RegisterServerEvent('esx_mecanojob:onNPCJobMissionCompleted')
 AddEventHandler('esx_mecanojob:onNPCJobMissionCompleted', function()
 
@@ -231,6 +241,7 @@ AddEventHandler('esx_mecanojob:onNPCJobMissionCompleted', function()
 
 end)
 
+---------------------------- register usable item --------------------------------------------------
 ESX.RegisterUsableItem('blowpipe', function(source)
 
   local _source = source
@@ -239,7 +250,7 @@ ESX.RegisterUsableItem('blowpipe', function(source)
   xPlayer.removeInventoryItem('blowpipe', 1)
 
   TriggerClientEvent('esx_mecanojob:onHijack', _source)
-  TriggerClientEvent('esx:showNotification', _source, _U('you_used_blowtorch'))
+    TriggerClientEvent('esx:showNotification', _source, _U('you_used_blowtorch'))
 
 end)
 
@@ -251,7 +262,7 @@ ESX.RegisterUsableItem('fixkit', function(source)
   xPlayer.removeInventoryItem('fixkit', 1)
 
   TriggerClientEvent('esx_mecanojob:onFixkit', _source)
-  TriggerClientEvent('esx:showNotification', _source, _U('you_used_repair_kit'))
+    TriggerClientEvent('esx:showNotification', _source, _U('you_used_repair_kit'))
 
 end)
 
@@ -263,33 +274,34 @@ ESX.RegisterUsableItem('carokit', function(source)
   xPlayer.removeInventoryItem('carokit', 1)
 
   TriggerClientEvent('esx_mecanojob:onCarokit', _source)
-  TriggerClientEvent('esx:showNotification', _source, _U('you_used_body_kit'))
+    TriggerClientEvent('esx:showNotification', _source, _U('you_used_body_kit'))
 
 end)
 
+----------------------------------
+---- Ajout Gestion Stock Boss ----
+----------------------------------
+
 RegisterServerEvent('esx_mecanojob:getStockItem')
 AddEventHandler('esx_mecanojob:getStockItem', function(itemName, count)
-	local xPlayer = ESX.GetPlayerFromId(source)
 
-	TriggerEvent('esx_addoninventory:getSharedInventory', 'society_mecano', function(inventory)
-		local item = inventory.getItem(itemName)
-		local sourceItem = xPlayer.getInventoryItem(itemName)
-		
-		-- is there enough in the society?
-		if count > 0 and item.count >= count then
-		
-			-- can the player carry the said amount of x item?
-			if sourceItem.limit ~= -1 and (sourceItem.count + count) > sourceItem.limit then
-				TriggerClientEvent('esx:showNotification', xPlayer.source, _U('player_cannot_hold'))
-			else
-				inventory.removeItem(itemName, count)
-				xPlayer.addInventoryItem(itemName, count)
-				TriggerClientEvent('esx:showNotification', xPlayer.source, _U('have_withdrawn', count, item.label))
-			end
-		else
-			TriggerClientEvent('esx:showNotification', xPlayer.source, _U('invalid_quantity'))
-		end
-	end)
+  local xPlayer = ESX.GetPlayerFromId(source)
+
+  TriggerEvent('esx_addoninventory:getSharedInventory', 'society_mecano', function(inventory)
+
+    local item = inventory.getItem(itemName)
+
+    if item.count >= count then
+      inventory.removeItem(itemName, count)
+      xPlayer.addInventoryItem(itemName, count)
+    else
+      TriggerClientEvent('esx:showNotification', xPlayer.source, _U('invalid_quantity'))
+    end
+
+    TriggerClientEvent('esx:showNotification', xPlayer.source, _U('you_removed') .. count .. ' ' .. item.label)
+
+  end)
+
 end)
 
 ESX.RegisterServerCallback('esx_mecanojob:getStockItems', function(source, cb)
@@ -300,6 +312,10 @@ ESX.RegisterServerCallback('esx_mecanojob:getStockItems', function(source, cb)
 
 end)
 
+-------------
+-- AJOUT 2 --
+-------------
+
 RegisterServerEvent('esx_mecanojob:putStockItems')
 AddEventHandler('esx_mecanojob:putStockItems', function(itemName, count)
 
@@ -308,9 +324,8 @@ AddEventHandler('esx_mecanojob:putStockItems', function(itemName, count)
   TriggerEvent('esx_addoninventory:getSharedInventory', 'society_mecano', function(inventory)
 
     local item = inventory.getItem(itemName)
-    local playerItemCount = xPlayer.getInventoryItem(itemName).count
 
-    if item.count >= 0 and count <= playerItemCount then
+    if item.count >= 0 then
       xPlayer.removeInventoryItem(itemName, count)
       inventory.addItem(itemName, count)
     else
@@ -322,6 +337,14 @@ AddEventHandler('esx_mecanojob:putStockItems', function(itemName, count)
   end)
 
 end)
+
+--ESX.RegisterServerCallback('esx_mecanojob:putStockItems', function(source, cb)
+
+--  TriggerEvent('esx_addoninventory:getSharedInventory', 'society_policestock', function(inventory)
+--    cb(inventory.items)
+--  end)
+
+--end)
 
 ESX.RegisterServerCallback('esx_mecanojob:getPlayerInventory', function(source, cb)
 

@@ -22,25 +22,20 @@ local TargetCoords            = nil
 local CurrentlyTowedVehicle   = nil
 local Blips                   = {}
 local NPCOnJob                = false
-local NPCTargetTowable        = nil
-local NPCTargetTowableZone    = nil
+local NPCTargetTowable         = nil
+local NPCTargetTowableZone     = nil
 local NPCHasSpawnedTowable    = false
 local NPCLastCancel           = GetGameTimer() - 5 * 60000
 local NPCHasBeenNextToTowable = false
-local NPCTargetDeleterZone    = false
-local IsDead                  = false
 
 ESX                           = nil
 GUI.Time                      = 0
 
 Citizen.CreateThread(function()
-	while ESX == nil do
-		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-		Citizen.Wait(0)
-	end
-	
-	Citizen.Wait(5000)
-	PlayerData = ESX.GetPlayerData()
+  while ESX == nil do
+    TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+    Citizen.Wait(0)
+  end
 end)
 
 function SelectRandomTowable()
@@ -116,7 +111,6 @@ function OpenMecanoActionsMenu()
     'default', GetCurrentResourceName(), 'mecano_actions',
     {
       title    = _U('mechanic'),
-      align    = 'top-left',
       elements = elements
     },
     function(data, menu)
@@ -165,6 +159,7 @@ function OpenMecanoActionsMenu()
 
             local elements = {
               {label = _U('flat_bed'), value = 'flatbed'},
+			  {label = _U('flat_bed'), value = 'towtruck'},
               {label = _U('tow_truck'), value = 'towtruck2'}
             }
 
@@ -179,7 +174,6 @@ function OpenMecanoActionsMenu()
               'default', GetCurrentResourceName(), 'spawn_vehicle',
               {
                 title    = _U('service_vehicle'),
-                align    = 'top-left',
                 elements = elements
               },
               function(data, menu)
@@ -276,7 +270,6 @@ function OpenMecanoHarvestMenu()
       'default', GetCurrentResourceName(), 'mecano_harvest',
       {
         title    = _U('harvest'),
-        align    = 'top-left',
         elements = elements
       },
       function(data, menu)
@@ -323,7 +316,6 @@ function OpenMecanoCraftMenu()
       'default', GetCurrentResourceName(), 'mecano_craft',
       {
         title    = _U('craft'),
-        align    = 'top-left',
         elements = elements
       },
       function(data, menu)
@@ -363,7 +355,6 @@ function OpenMobileMecanoActionsMenu()
     'default', GetCurrentResourceName(), 'mobile_mecano_actions',
     {
       title    = _U('mechanic'),
-      align    = 'top-left',
       elements = {
         {label = _U('billing'),    value = 'billing'},
         {label = _U('hijack'),     value = 'hijack_vehicle'},
@@ -383,7 +374,7 @@ function OpenMobileMecanoActionsMenu()
           },
           function(data, menu)
             local amount = tonumber(data.value)
-            if amount == nil or amount < 0 then
+            if amount == nil then
               ESX.ShowNotification(_U('amount_invalid'))
             else
               menu.close()
@@ -490,26 +481,30 @@ function OpenMobileMecanoActionsMenu()
 
       if data.current.value == 'del_vehicle' then
 
-        local ped = GetPlayerPed(-1)
+        local ped = GetPlayerPed( -1 )
 
-        if DoesEntityExist(ped) and not IsEntityDead(ped) then
+        if ( DoesEntityExist( ped ) and not IsEntityDead( ped ) ) then
           local pos = GetEntityCoords( ped )
 
-          if IsPedSittingInAnyVehicle(ped) then
+          if ( IsPedSittingInAnyVehicle( ped ) ) then
             local vehicle = GetVehiclePedIsIn( ped, false )
 
-            if GetPedInVehicleSeat(vehicle, -1) == ped then
+            if ( GetPedInVehicleSeat( vehicle, -1 ) == ped ) then
               ESX.ShowNotification(_U('vehicle_impounded'))
-              ESX.Game.DeleteVehicle(vehicle)
+              SetEntityAsMissionEntity( vehicle, true, true )
+              deleteCar( vehicle )
             else
               ESX.ShowNotification(_U('must_seat_driver'))
             end
           else
-            local vehicle = ESX.Game.GetVehicleInDirection()
+            local playerPos = GetEntityCoords( ped, 1 )
+            local inFrontOfPlayer = GetOffsetFromEntityInWorldCoords( ped, 0.0, distanceToCheck, 0.0 )
+            local vehicle = GetVehicleInDirection( playerPos, inFrontOfPlayer )
 
-            if DoesEntityExist(vehicle) then
+            if ( DoesEntityExist( vehicle ) ) then
               ESX.ShowNotification(_U('vehicle_impounded'))
-              ESX.Game.DeleteVehicle(vehicle)
+              SetEntityAsMissionEntity( vehicle, true, true )
+              deleteCar( vehicle )
             else
               ESX.ShowNotification(_U('must_near'))
             end
@@ -526,7 +521,10 @@ function OpenMobileMecanoActionsMenu()
         local isVehicleTow = IsVehicleModel(vehicle, towmodel)
 
         if isVehicleTow then
-          local targetVehicle = ESX.Game.GetVehicleInDirection()
+
+          local coordA = GetEntityCoords(playerped, 1)
+          local coordB = GetOffsetFromEntityInWorldCoords(playerped, 0.0, 5.0, 0.0)
+          local targetVehicle = getVehicleInDirection(coordA, coordB)
 
           if CurrentlyTowedVehicle == nil then
             if targetVehicle ~= 0 then
@@ -570,20 +568,13 @@ function OpenMobileMecanoActionsMenu()
 
             if NPCOnJob then
 
-              if NPCTargetDeleterZone then
-
-                if CurrentlyTowedVehicle == NPCTargetTowable then
-                  ESX.Game.DeleteVehicle(NPCTargetTowable)
-                  TriggerServerEvent('esx_mecanojob:onNPCJobMissionCompleted')
-                  StopNPCJob()
-                  NPCTargetDeleterZone = false
-
-                else
-                  ESX.ShowNotification(_U('not_right_veh'))
-                end
+              if CurrentlyTowedVehicle == NPCTargetTowable then
+                ESX.Game.DeleteVehicle(NPCTargetTowable)
+                TriggerServerEvent('esx_mecanojob:onNPCJobMissionCompleted')
+                StopNPCJob()
 
               else
-                ESX.ShowNotification(_U('not_right_place'))
+                ESX.ShowNotification(_U('not_right_veh'))
               end
 
             end
@@ -649,7 +640,11 @@ function OpenMobileMecanoActionsMenu()
 end
 
 function OpenGetStocksMenu()
+
   ESX.TriggerServerCallback('esx_mecanojob:getStockItems', function(items)
+
+    print(json.encode(items))
+
     local elements = {}
 
     for i=1, #items, 1 do
@@ -660,7 +655,6 @@ function OpenGetStocksMenu()
       'default', GetCurrentResourceName(), 'stocks_menu',
       {
         title    = _U('mechanic_stock'),
-        align    = 'top-left',
         elements = elements
       },
       function(data, menu)
@@ -681,10 +675,9 @@ function OpenGetStocksMenu()
             else
               menu2.close()
               menu.close()
-              TriggerServerEvent('esx_mecanojob:getStockItem', itemName, count)
-
-              Citizen.Wait(1000)
               OpenGetStocksMenu()
+
+              TriggerServerEvent('esx_mecanojob:getStockItem', itemName, count)
             end
 
           end,
@@ -723,7 +716,6 @@ ESX.TriggerServerCallback('esx_mecanojob:getPlayerInventory', function(inventory
       'default', GetCurrentResourceName(), 'stocks_menu',
       {
         title    = _U('inventory'),
-        align    = 'top-left',
         elements = elements
       },
       function(data, menu)
@@ -744,10 +736,9 @@ ESX.TriggerServerCallback('esx_mecanojob:getPlayerInventory', function(inventory
             else
               menu2.close()
               menu.close()
-              TriggerServerEvent('esx_mecanojob:putStockItems', itemName, count)
-
-              Citizen.Wait(1000)
               OpenPutStocksMenu()
+
+              TriggerServerEvent('esx_mecanojob:putStockItems', itemName, count)
             end
 
           end,
@@ -865,6 +856,21 @@ AddEventHandler('esx_mecanojob:onFixkit', function()
   end
 end)
 
+function setEntityHeadingFromEntity ( vehicle, playerPed )
+    local heading = GetEntityHeading(vehicle)
+    SetEntityHeading( playerPed, heading )
+end
+
+function getVehicleInDirection(coordFrom, coordTo)
+  local rayHandle = CastRayPointToPoint(coordFrom.x, coordFrom.y, coordFrom.z, coordTo.x, coordTo.y, coordTo.z, 10, GetPlayerPed(-1), 0)
+  local a, b, c, d, vehicle = GetRaycastResult(rayHandle)
+  return vehicle
+end
+
+function deleteCar( entity )
+    Citizen.InvokeNative( 0xEA386986E786A54F, Citizen.PointerValueIntInitialized( entity ) )
+end
+
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(xPlayer)
   PlayerData = xPlayer
@@ -879,10 +885,6 @@ AddEventHandler('esx_mecanojob:hasEnteredMarker', function(zone)
 
   if zone == NPCJobTargetTowable then
 
-  end
-
-  if zone =='VehicleDelivery' then
-    NPCTargetDeleterZone = true
   end
 
   if zone == 'MecanoActions' then
@@ -920,10 +922,6 @@ AddEventHandler('esx_mecanojob:hasEnteredMarker', function(zone)
 end)
 
 AddEventHandler('esx_mecanojob:hasExitedMarker', function(zone)
-
-  if zone =='VehicleDelivery' then
-    NPCTargetDeleterZone = false
-  end
 
   if zone == 'Craft' then
     TriggerServerEvent('esx_mecanojob:stopCraft')
@@ -1069,45 +1067,23 @@ Citizen.CreateThread(function()
 end)
 
 Citizen.CreateThread(function()
-
-  local trackedEntities = {
-      'prop_roadcone02a',
-      'prop_toolchest_01'
-  }
-
   while true do
 
-    Citizen.Wait(10)
+    Citizen.Wait(0)
 
     local playerPed = GetPlayerPed(-1)
     local coords    = GetEntityCoords(playerPed)
 
-    local closestDistance = -1
-    local closestEntity   = nil
+    local entity, distance = ESX.Game.GetClosestObject({
+      'prop_roadcone02a',
+      'prop_toolchest_01'
+    })
 
-    for i=1, #trackedEntities, 1 do
+    if distance ~= -1 and distance <= 3.0 then
 
-      local object = GetClosestObjectOfType(coords.x,  coords.y,  coords.z,  3.0,  GetHashKey(trackedEntities[i]), false, false, false)
-
-      if DoesEntityExist(object) then
-
-        local objCoords = GetEntityCoords(object)
-        local distance  = GetDistanceBetweenCoords(coords.x,  coords.y,  coords.z,  objCoords.x,  objCoords.y,  objCoords.z,  true)
-
-        if closestDistance == -1 or closestDistance > distance then
-          closestDistance = distance
-          closestEntity   = object
-        end
-
-      end
-
-    end
-
-    if closestDistance ~= -1 and closestDistance <= 3.0 then
-
-      if LastEntity ~= closestEntity then
-        TriggerEvent('esx_mecanojob:hasEnteredEntityZone', closestEntity)
-        LastEntity = closestEntity
+      if LastEntity ~= entity then
+        TriggerEvent('esx_mecanojob:hasEnteredEntityZone', entity)
+        LastEntity = entity
       end
 
     else
@@ -1121,6 +1097,7 @@ Citizen.CreateThread(function()
 
   end
 end)
+
 
 -- Key Controls
 Citizen.CreateThread(function()
@@ -1158,6 +1135,7 @@ Citizen.CreateThread(function()
 
                 if
                   GetEntityModel(vehicle) == GetHashKey('flatbed')   or
+				  GetEntityModel(vehicle) == GetHashKey('towtruck')   or
                   GetEntityModel(vehicle) == GetHashKey('towtruck2') or
                   GetEntityModel(vehicle) == GetHashKey('slamvan3')
                 then
@@ -1177,11 +1155,11 @@ Citizen.CreateThread(function()
           end
         end
 
-        if IsControlJustReleased(0, Keys['F6']) and not IsDead and PlayerData.job ~= nil and PlayerData.job.name == 'mecano' then
+        if IsControlJustReleased(0, Keys['F6']) and PlayerData.job ~= nil and PlayerData.job.name == 'mecano' then
             OpenMobileMecanoActionsMenu()
         end
 
-        if IsControlJustReleased(0, Keys['DELETE']) and not IsDead and PlayerData.job ~= nil and PlayerData.job.name == 'mecano' then
+        if IsControlJustReleased(0, Keys['DELETE']) and PlayerData.job ~= nil and PlayerData.job.name == 'mecano' then
 
           if NPCOnJob then
 
@@ -1209,10 +1187,8 @@ Citizen.CreateThread(function()
     end
 end)
 
-AddEventHandler('esx:onPlayerDeath', function()
-	IsDead = true
-end)
-
-AddEventHandler('playerSpawned', function(spawn)
-	IsDead = false
-end)
+function openMechanic()
+  if PlayerData.job ~= nil and PlayerData.job.name == 'mecano' then
+    OpenMobileMecanoActionsMenu()
+  end
+end
